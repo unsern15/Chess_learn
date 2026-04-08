@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>
+:root{--bg:#0f0f13;--surface:#1a1a24;--surface2:#22222f;--border:#2e2e40;--accent:#7c6af7;--accent2:#5b4fcf;--green:#3ecf8e;--red:#f26b5b;--text:#e8e8f0;--muted:#8888aa;--gold:#f0c040;--warn:#f0a040;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;height:100vh;overflow:hidden;}
+#app{display:flex;height:100vh;}
+#sidebar{width:200px;min-width:200px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:18px 0;}
+.logo{padding:0 16px 20px;font-size:17px;font-weight:700;}
+.logo span{color:var(--accent);}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;color:var(--muted);font-size:14px;border-left:3px solid transparent;transition:all .15s;user-select:none;}
+.nav-item:hover{color:var(--text);background:var(--surface2);}
+.nav-item.active{color:var(--text);border-left-color:var(--accent);background:var(--surface2);}
+.sidebar-footer{margin-top:auto;padding:14px 16px;}
+.score-pill{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:7px 12px;font-size:13px;display:flex;align-items:center;gap:7px;}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;}
+#main{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
+.page{display:none;flex:1;}.page.active{display:flex;flex-direction:column;}
+
+/* HOME */
+#page-home{align-items:center;justify-content:center;padding:32px 20px;text-align:center;gap:0;}
+.home-hero{margin-bottom:10px;}
+.home-title{font-size:32px;font-weight:800;letter-spacing:-.5px;margin-bottom:6px;}
+.home-title span{color:var(--accent);}
+.home-sub{font-size:15px;color:var(--muted);margin-bottom:28px;max-width:420px;}
+.home-cta{display:flex;gap:10px;justify-content:center;margin-bottom:36px;flex-wrap:wrap;}
+.home-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;width:100%;max-width:620px;}
+.home-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 12px;cursor:pointer;transition:all .2s;text-align:center;}
+.home-card:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 6px 24px rgba(124,106,247,.18);}
+.home-card.featured{border-color:rgba(124,106,247,.5);background:rgba(124,106,247,.07);}
+.home-card-icon{font-size:24px;margin-bottom:8px;}
+.home-card-title{font-weight:600;font-size:14px;margin-bottom:3px;}
+.home-card-desc{font-size:11px;color:var(--muted);line-height:1.5;}
+
+/* PRACTICE */
+#page-practice{padding:20px;}
+.page-title{font-size:19px;font-weight:700;margin-bottom:2px;}
+.page-sub{color:var(--muted);font-size:13px;margin-bottom:16px;}
+.practice-layout{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start;}
+#chessboard{display:grid;grid-template-columns:repeat(8,48px);grid-template-rows:repeat(8,48px);border:2px solid #5a3e28;border-radius:4px;overflow:hidden;box-shadow:0 6px 28px rgba(0,0,0,.6);}
+.sq{width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:30px;line-height:1;cursor:pointer;user-select:none;position:relative;}
+.sq.light{background:#f0d9b5;}.sq.dark{background:#b58863;}
+.wp{color:#fff;text-shadow:0 0 2px #000,0 0 5px #000,1px 1px 0 #444;}
+.bp{color:#111;text-shadow:0 0 2px rgba(255,255,255,.4);}
+.sq.sel{background:#7fc97f!important;}
+.sq.hl-from{background:#f6f648!important;}
+.sq.hl-to{background:#c8d42b!important;}
+.sq.hint-sq::after{content:'';position:absolute;inset:5px;border-radius:50%;background:rgba(124,106,247,.4);pointer-events:none;}
+#coords-file{display:grid;grid-template-columns:repeat(8,48px);margin-top:3px;}
+#coords-file span{text-align:center;font-size:11px;color:var(--muted);}
+.board-controls{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap;}
+.side-panel{display:flex;flex-direction:column;gap:11px;min-width:0;}
+.panel-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 15px;}
+.opening-title{font-size:17px;font-weight:700;margin-bottom:5px;}
+.tag-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
+.tag{font-size:11px;padding:2px 9px;border-radius:20px;background:rgba(124,106,247,.15);color:var(--accent);border:1px solid rgba(124,106,247,.3);}
+.tag.green{background:rgba(62,207,142,.15);color:var(--green);border-color:rgba(62,207,142,.3);}
+.tag.gold{background:rgba(240,192,64,.15);color:var(--gold);border-color:rgba(240,192,64,.3);}
+.opening-desc{font-size:13px;color:var(--muted);line-height:1.6;}
+.move-seq{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;}
+.mv{font-size:12px;padding:3px 9px;border-radius:7px;background:var(--surface2);color:var(--muted);border:1px solid var(--border);font-family:monospace;}
+.mv.done{background:rgba(62,207,142,.12);color:var(--green);border-color:rgba(62,207,142,.3);}
+.mv.cur{background:rgba(124,106,247,.2);color:#a89ef9;border-color:rgba(124,106,247,.5);font-weight:600;}
+.prog-label{font-size:11px;color:var(--muted);margin-bottom:4px;display:flex;justify-content:space-between;}
+.prog-bg{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .4s;}
+.status-box{padding:9px 12px;border-radius:8px;font-size:13px;border:1px solid;}
+.status-box.ok{background:rgba(62,207,142,.1);color:var(--green);border-color:rgba(62,207,142,.25);}
+.status-box.err{background:rgba(242,107,91,.1);color:var(--red);border-color:rgba(242,107,91,.25);}
+.status-box.info{background:rgba(124,106,247,.1);color:#a89ef9;border-color:rgba(124,106,247,.25);}
+
+/* BUTTONS */
+.btn{padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;font-size:13px;transition:all .15s;}
+.btn:hover{border-color:var(--accent);color:var(--accent);}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent2);}
+.btn.primary:hover{background:var(--accent2);}
+.btn.sm{padding:5px 10px;font-size:12px;}
+.btn.lg{padding:10px 22px;font-size:15px;}
+
+/* LIBRARY */
+#page-library{padding:20px;}
+.filter-bar{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;}
+.chip{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:13px;transition:all .15s;}
+.chip:hover{border-color:var(--accent);color:var(--accent);}
+.chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
+.ocard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 14px;cursor:pointer;transition:all .2s;}
+.ocard:hover{border-color:var(--accent);transform:translateY(-2px);}
+.ocard.active{border-color:var(--accent);box-shadow:0 0 0 2px rgba(124,106,247,.2);}
+.ocard-name{font-weight:600;font-size:14px;margin-bottom:4px;}
+.ocard-moves{font-size:11px;color:var(--muted);font-family:monospace;margin-bottom:7px;line-height:1.5;}
+
+/* QUIZ */
+#page-quiz{padding:20px;}
+.quiz-wrap{max-width:520px;}
+.quiz-q{font-size:18px;font-weight:600;margin-bottom:14px;line-height:1.4;}
+.quiz-opts{display:flex;flex-direction:column;gap:8px;}
+.quiz-opt{padding:12px 15px;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;text-align:left;font-size:14px;transition:all .15s;}
+.quiz-opt:hover{border-color:var(--accent);background:rgba(124,106,247,.08);}
+.rec-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;}
+.rec-card.top{border-color:var(--accent);}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:10px;margin-bottom:14px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;}
+.stat-num{font-size:22px;font-weight:700;}
+.stat-lbl{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* CHESS.COM — enrichi */
+#page-chesscom{padding:20px;overflow-y:auto;}
+.cc-input{flex:1;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:14px;}
+.cc-input:focus{outline:none;border-color:var(--accent);}
+.cc-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.cc-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;}
+.cc-section-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;}
+.ob-row{display:flex;align-items:center;gap:8px;margin-bottom:9px;font-size:13px;}
+.ob-label{width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);}
+.ob-bg{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+.ob-fill{height:100%;border-radius:3px;}
+.ob-fill.good{background:var(--green);}
+.ob-fill.bad{background:var(--red);}
+.ob-fill.neutral{background:var(--accent);}
+.ob-pct{width:34px;text-align:right;font-weight:600;font-size:12px;}
+.rb{font-size:11px;padding:2px 7px;border-radius:10px;white-space:nowrap;}
+.rb.w{background:rgba(62,207,142,.2);color:var(--green);}
+.rb.l{background:rgba(242,107,91,.2);color:var(--red);}
+.rb.d{background:rgba(136,136,170,.2);color:var(--muted);}
+.insight-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px;}
+.insight-card.good{border-color:rgba(62,207,142,.4);background:rgba(62,207,142,.05);}
+.insight-card.bad{border-color:rgba(242,107,91,.4);background:rgba(242,107,91,.05);}
+.insight-card.warn{border-color:rgba(240,160,64,.4);background:rgba(240,160,64,.05);}
+.insight-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+.insight-label.good{color:var(--green);}
+.insight-label.bad{color:var(--red);}
+.insight-label.warn{color:var(--warn);}
+.insight-text{font-size:13px;color:var(--text);line-height:1.5;}
+.insight-text span{color:var(--accent);font-weight:600;}
+.winrate-bar{height:10px;border-radius:5px;overflow:hidden;display:flex;margin:6px 0;}
+.wr-w{background:var(--green);}
+.wr-d{background:var(--muted);}
+.wr-l{background:var(--red);}
+.month-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+.mtab{padding:4px 12px;border-radius:16px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:12px;transition:all .15s;}
+.mtab:hover{border-color:var(--accent);color:var(--accent);}
+.mtab.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+@media(max-width:700px){.cc-grid{grid-template-columns:1fr;}#sidebar{display:none;}#main{overflow-y:auto;}.practice-layout{grid-template-columns:1fr;}}
+
+/* FLASHCARDS */
+#page-flashcards{padding:20px;}
+.fc-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:2.5rem 2rem;text-align:center;cursor:pointer;min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;margin-bottom:12px;transition:border-color .2s;max-width:500px;}
+.fc-card:hover{border-color:var(--accent);}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="sidebar">
+    <div class="logo">♟ <span>Chess</span>Learn</div>
+    <div class="nav-item active" onclick="goPage('home')"><span>🏠</span> Accueil</div>
+    <div class="nav-item" onclick="goPage('practice')"><span>♜</span> Pratique</div>
+    <div class="nav-item" onclick="goPage('library')"><span>📚</span> Bibliothèque</div>
+    <div class="nav-item" onclick="goPage('quiz')"><span>✦</span> Mon profil</div>
+    <div class="nav-item" onclick="goPage('chesscom')"><span>⚡</span> Chess.com</div>
+    <div class="nav-item" onclick="goPage('flashcards')"><span>🗂</span> Flashcards</div>
+    <div class="sidebar-footer">
+      <div class="score-pill"><div class="dot"></div><span id="sidebar-score">0 / 0 correct</span></div>
+    </div>
+  </div>
+
+  <div id="main">
+
+    <!-- HOME -->
+    <div id="page-home" class="page active">
+      <div class="home-hero">
+        <div class="home-title">♟ <span>Chess</span>Learn</div>
+        <div class="home-sub">Apprends les ouvertures, analyse tes parties Chess.com et identifie ton style de jeu.</div>
+        <div class="home-cta">
+          <button class="btn primary lg" onclick="goPage('quiz')">✦ Découvrir mon profil</button>
+          <button class="btn lg" onclick="goPage('practice')">♜ Pratiquer</button>
+        </div>
+      </div>
+      <div class="home-cards">
+        <div class="home-card featured" onclick="goPage('quiz')">
+          <div class="home-card-icon">✦</div>
+          <div class="home-card-title">Mon profil</div>
+          <div class="home-card-desc">Questionnaire pour trouver tes ouvertures idéales</div>
+        </div>
+        <div class="home-card" onclick="goPage('chesscom')">
+          <div class="home-card-icon">⚡</div>
+          <div class="home-card-title">Chess.com</div>
+          <div class="home-card-desc">Analyse tes vraies parties et lacunes</div>
+        </div>
+        <div class="home-card" onclick="goPage('practice')">
+          <div class="home-card-icon">♜</div>
+          <div class="home-card-title">Pratique</div>
+          <div class="home-card-desc">Joue les coups sur l'échiquier</div>
+        </div>
+        <div class="home-card" onclick="goPage('library')">
+          <div class="home-card-icon">📚</div>
+          <div class="home-card-title">Bibliothèque</div>
+          <div class="home-card-desc">10 ouvertures classiques</div>
+        </div>
+        <div class="home-card" onclick="goPage('flashcards')">
+          <div class="home-card-icon">🗂</div>
+          <div class="home-card-title">Flashcards</div>
+          <div class="home-card-desc">Mémorise les séquences</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRACTICE -->
+    <div id="page-practice" class="page">
+      <div style="padding:20px">
+        <button class="btn sm" style="margin-bottom:14px" onclick="goPage('home')">← Accueil</button>
+        <div class="page-title">Pratique</div>
+        <div class="page-sub">Joue les coups de l'ouverture sur l'échiquier</div>
+        <div class="practice-layout">
+          <div>
+            <div id="chessboard"></div>
+            <div id="coords-file"></div>
+            <div class="board-controls">
+              <button class="btn" onclick="stepNext()">Coup suivant ›</button>
+              <button class="btn" onclick="resetBoard()">Réinitialiser</button>
+              <button class="btn" id="hint-btn" onclick="toggleHints()">Indices</button>
+              <button class="btn sm" onclick="goPage('library')">Changer ↗</button>
+            </div>
+          </div>
+          <div class="side-panel">
+            <div class="panel-card">
+              <div class="opening-title" id="p-name"></div>
+              <div class="tag-row" id="p-tags"></div>
+              <div class="opening-desc" id="p-desc"></div>
+            </div>
+            <div class="panel-card">
+              <div style="font-size:10px;color:var(--muted);margin-bottom:7px;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Séquence</div>
+              <div class="move-seq" id="p-moves"></div>
+              <div style="margin-top:10px">
+                <div class="prog-label"><span id="p-prog-lbl">0 / 0</span><span id="p-prog-pct">0%</span></div>
+                <div class="prog-bg"><div class="prog-fill" id="p-prog" style="width:0%"></div></div>
+              </div>
+            </div>
+            <div id="p-status"></div>
+            <div class="panel-card" style="font-size:12px;color:var(--muted)">Clique une pièce puis la case cible pour jouer.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIBRARY -->
+    <div id="page-library" class="page">
+      <div style="padding:20px">
+        <button class="btn sm" style="margin-bottom:14px" onclick="goPage('home')">← Accueil</button>
+        <div class="page-title">Bibliothèque</div>
+        <div class="page-sub">10 ouvertures classifiées par style et couleur</div>
+        <div class="filter-bar">
+          <button class="chip active" onclick="setFilter('all',this)">Tout</button>
+          <button class="chip" onclick="setFilter('white',this)">Blancs</button>
+          <button class="chip" onclick="setFilter('black',this)">Noirs</button>
+          <button class="chip" onclick="setFilter('open',this)">Jeu ouvert</button>
+          <button class="chip" onclick="setFilter('closed',this)">Jeu fermé</button>
+          <button class="chip" onclick="setFilter('hyper',this)">Hypermoderne</button>
+        </div>
+        <div class="lib-grid" id="lib-grid"></div>
+      </div>
+    </div>
+
+    <!-- QUIZ -->
+    <div id="page-quiz" class="page">
+      <div style="padding:20px">
+        <button class="btn sm" style="margin-bottom:14px" onclick="goPage('home')">← Accueil</button>
+        <div class="page-title">Mon profil de joueur</div>
+        <div class="page-sub">Réponds à 5 questions pour découvrir les ouvertures adaptées à ton style</div>
+        <div class="quiz-wrap" id="quiz-content"></div>
+      </div>
+    </div>
+
+    <!-- CHESS.COM -->
+    <div id="page-chesscom" class="page">
+      <div style="padding:20px">
+        <button class="btn sm" style="margin-bottom:14px" onclick="goPage('home')">← Accueil</button>
+        <div class="page-title">Analyse Chess.com</div>
+        <div class="page-sub">Connecte-toi pour analyser tes ouvertures, tes forces et tes lacunes</div>
+        <div class="panel-card" style="margin-bottom:16px">
+          <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+            <input class="cc-input" id="cc-user" placeholder="Ton nom d'utilisateur Chess.com"/>
+            <button class="btn primary" onclick="fetchCC()">Analyser</button>
+            <button class="btn" onclick="loadDemo()">Démo</button>
+          </div>
+          <div style="font-size:12px;color:var(--muted)">API publique Chess.com — aucun mot de passe requis. Les parties publiques des 3 derniers mois sont analysées.</div>
+        </div>
+        <div id="cc-month-tabs" style="display:none">
+          <div class="month-tabs" id="month-tabs"></div>
+        </div>
+        <div id="cc-result"></div>
+      </div>
+    </div>
+
+    <!-- FLASHCARDS -->
+    <div id="page-flashcards" class="page">
+      <div style="padding:20px">
+        <button class="btn sm" style="margin-bottom:14px" onclick="goPage('home')">← Accueil</button>
+        <div class="page-title">Flashcards</div>
+        <div class="page-sub">Mémorise les séquences de coups</div>
+        <div id="fc-content"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const FILES='abcdefgh';
+const WP={K:'♔',Q:'♕',R:'♖',B:'♗',N:'♘',P:'♙'};
+const BP={k:'♚',q:'♛',r:'♜',b:'♝',n:'♞',p:'♟'};
+
+const OPENINGS=[
+  {id:'ruy',name:'Ruy Lopez',tag:'Ouverture roi',color:'white',type:'open',desc:"L'une des plus anciennes ouvertures. Les Blancs pressent le Nc6 pour affaiblir le centre noir.",moves:['e4','e5','Nf3','Nc6','Bb5'],uci:['e2e4','e7e5','g1f3','b8c6','f1b5'],
+   explain:["1.e4 — Les Blancs occupent le centre immédiatement, libèrent le fou f1 et la dame. Le coup le plus direct pour chercher l'initiative.","1...e5 — Les Noirs répondent symétriquement, revendiquent leur part du centre et libèrent leurs pièces.","2.Nf3 — Le cavalier attaque le pion e5 et se développe vers le centre. Coup naturel et efficace.","2...Nc6 — Les Noirs défendent le pion e5 avec le cavalier, se développent et contrôlent d4.","3.Bb5 — Le coup clé du Ruy Lopez ! Le fou presse le Nc6 qui défend e5. L'idée : si Nc6 se déplace, e5 tombe. Les Blancs préparent le roque."]},
+  {id:'sicilian',name:'Défense Sicilienne',tag:'Défense populaire',color:'black',type:'open',desc:"La réponse la plus jouée à 1.e4. Jeu asymétrique avec des contre-chances actives sur l'aile dame.",moves:['e4','c5','Nf3','d6','d4','cxd4','Nxd4'],uci:['e2e4','c7c5','g1f3','d7d6','d2d4','c5d4','f3d4'],
+   explain:["1.e4 — Les Blancs contrôlent le centre et visent une ouverture dynamique.","1...c5 — La Sicilienne ! Les Noirs refusent la symétrie. c5 contrôle d4 sans avancer e5, préparant un contre-jeu sur l'aile dame.","2.Nf3 — Développement naturel, attaque indirectement d5 et prépare d4.","2...d6 — Les Noirs préparent ...Nf6 et contrôlent e5 pour éviter que les Blancs n'avancent ce pion.","3.d4 — Les Blancs ouvrent le centre pendant qu'ils ont l'avantage de développement.","3...cxd4 — Les Noirs échangent le pion c5 contre le pion d4 central des Blancs — un échange favorable.","4.Nxd4 — Le cavalier reprend au centre, bien placé, et les Blancs ont un net avantage d'espace."]},
+  {id:'qg',name:'Gambit Dame',tag:'Ouverture dame',color:'white',type:'closed',desc:"Un classique stratégique. Les Blancs offrent un pion pour contrôler le centre.",moves:['d4','d5','c4','e6','Nc3','Nf6'],uci:['d2d4','d7d5','c2c4','e7e6','b1c3','g8f6'],
+   explain:["1.d4 — Les Blancs contrôlent le centre avec le pion dame, menant à des jeux plus fermés et stratégiques.","1...d5 — Les Noirs répondent symétriquement, occupant le centre.","2.c4 — Le Gambit Dame ! Les Blancs proposent l'échange du pion c4 pour dominer le centre avec e4 si les Noirs prennent.","2...e6 — Décliné ! Les Noirs défendent d5 avec le pion e6, libèrent le fou f8 mais enferment le fou c8 temporairement.","3.Nc3 — Développement naturel du cavalier vers le centre, pressant d5.","3...Nf6 — Les Noirs développent le cavalier, attaquent e4 potentiel et se préparent à roquer."]},
+  {id:'ki',name:'Indienne du Roi',tag:'Hypermoderne',color:'black',type:'hyper',desc:"Les Noirs laissent les Blancs construire un grand centre avant de le contre-attaquer.",moves:['d4','Nf6','c4','g6','Nc3','Bg7','e4','d6'],uci:['d2d4','g8f6','c2c4','g7g6','b1c3','f8g7','e2e4','d7d6'],
+   explain:["1.d4 — Les Blancs visent un centre solide.","1...Nf6 — Les Noirs développent le cavalier et contrôlent e4 sans avancer de pion central — concept hypermoderne.","2.c4 — Les Blancs renforcent leur contrôle du centre.","2...g6 — Préparation du fianchetto du fou de roi. Les Noirs adoptent une stratégie hypermoderne.","3.Nc3 — Développement classique, pression sur d5.","3...Bg7 — Le fou en fianchetto sur g7 est un monstre diagonal, visant le centre blanc de loin.","4.e4 — Les Blancs établissent un grand centre de pions (c4+d4+e4). Les Noirs l'acceptent... pour mieux le détruire !","4...d6 — Les Noirs contrôlent e5, préparent ...e5 ou ...c5 pour contre-attaquer le centre blanc."]},
+  {id:'french',name:'Défense Française',tag:'Défense solide',color:'black',type:'closed',desc:"Solide mais légèrement passive. Les Noirs contre-attaquent avec ...c5.",moves:['e4','e6','d4','d5','Nc3','Nf6'],uci:['e2e4','e7e6','d2d4','d7d5','b1c3','g8f6'],
+   explain:["1.e4 — Les Blancs prennent le centre.","1...e6 — La Française ! Solide mais passif en apparence. Les Noirs préparent ...d5 pour contester le centre.","2.d4 — Les Blancs occupent d4 pendant qu'ils le peuvent.","2...d5 — Les Noirs attaquent immédiatement le centre blanc. La structure est maintenant très serrée.","3.Nc3 — Les Blancs défendent e4 et développent une pièce.","3...Nf6 — Les Noirs pressent e4, forçant les Blancs à prendre une décision sur ce pion."]},
+  {id:'london',name:'Système de Londres',tag:'Système solide',color:'white',type:'closed',desc:"Solide et facile à apprendre. Idéal pour les joueurs positionnels.",moves:['d4','d5','Nf3','Nf6','Bf4','e6','e3'],uci:['d2d4','d7d5','g1f3','g8f6','c1f4','e7e6','e2e3'],
+   explain:["1.d4 — Contrôle du centre.","1...d5 — Les Noirs répondent symétriquement.","2.Nf3 — Développement du cavalier, contrôle e5.","2...Nf6 — Réponse naturelle des Noirs.","3.Bf4 — Le coup distinctif du Système de Londres ! Le fou est développé avant e3, évitant d'être enfermé.","3...e6 — Les Noirs consolident le centre.","4.e3 — Les Blancs complètent la structure de base du Londres : pions d4, e3, fou f4. Solide et prévisible."]},
+  {id:'caro',name:'Défense Caro-Kann',tag:'Défense solide',color:'black',type:'closed',desc:"Très solide contre 1.e4. Les Noirs développent leur fou dame avant ...e6.",moves:['e4','c6','d4','d5','Nc3','dxe4','Nxe4'],uci:['e2e4','c7c6','d2d4','d7d5','b1c3','d5e4','c3e4'],
+   explain:["1.e4 — Les Blancs prennent le centre.","1...c6 — La Caro-Kann ! Prépare ...d5 pour contester le centre tout en gardant la structure de pions saine. Contrairement à la Française, le fou c8 ne sera pas enfermé.","2.d4 — Les Blancs consolident le centre.","2...d5 — Les Noirs attaquent le centre directement, comme prévu dès le 1er coup.","3.Nc3 — Les Blancs défendent e4.","3...dxe4 — Les Noirs échangent pour libérer leur jeu.","4.Nxe4 — Le cavalier occupe le centre. Les Noirs vont maintenant le défier avec ...Bf5 ou ...Nd7."]},
+  {id:'italian',name:'Partie Italienne',tag:'Ouverture roi',color:'white',type:'open',desc:"Développement rapide et contrôle du centre. Populaire à tous niveaux.",moves:['e4','e5','Nf3','Nc6','Bc4','Bc5'],uci:['e2e4','e7e5','g1f3','b8c6','f1c4','f8c5'],
+   explain:["1.e4 — Contrôle du centre, ouverture des diagonales.","1...e5 — Réponse symétrique classique.","2.Nf3 — Attaque e5, développement naturel vers le centre.","2...Nc6 — Défense du pion e5, développement.","3.Bc4 — L'Italienne ! Le fou vise f7, la case la plus faible des Noirs. Prépare des attaques futures sur le roi adverse.","3...Bc5 — Les Noirs ripostent avec un fou actif, visant f2. Position symétrique très équilibrée."]},
+  {id:'nimzo',name:'Défense Nimzo-Indienne',tag:'Hypermoderne',color:'black',type:'hyper',desc:"Les Noirs clouent le Nc3 avec Fb4 pour contester le centre sans l'occuper.",moves:['d4','Nf6','c4','e6','Nc3','Bb4'],uci:['d2d4','g8f6','c2c4','e7e6','b1c3','f8b4'],
+   explain:["1.d4 — Les Blancs visent un centre fermé.","1...Nf6 — Hypermoderne : contrôle e4 sans occuper le centre.","2.c4 — Les Blancs étendent leur contrôle.","2...e6 — Solide, prépare ...d5 et libère le fou f8.","3.Nc3 — Développement naturel.","3...Bb4 — Le coup clé ! Le fou cloue le cavalier c3 qui soutenait e4. Les Noirs empêchent e4 ou créent des doublons de pions si les Blancs échangent."]},
+  {id:'english',name:'Ouverture Anglaise',tag:'Flanchet',color:'white',type:'hyper',desc:"Contrôle du centre via les flancs avec c4. Jeu flexible et stratégique.",moves:['c4','e5','Nc3','Nf6','g3','d5'],uci:['c2c4','e7e5','b1c3','g8f6','g2g3','d7d5'],
+   explain:["1.c4 — L'Anglaise ! Les Blancs contrôlent d5 depuis le flanc sans occuper le centre avec un pion. Très flexible, peut transposer vers de nombreuses ouvertures.","1...e5 — Les Noirs occupent le centre, cherchant un jeu ouvert.","2.Nc3 — Développement naturel, pression sur d5 et e4.","2...Nf6 — Développement actif, attaque potentielle sur e4.","3.g3 — Préparation du fianchetto du fou de roi. Le fou en g2 sera un sniper diagonal.","3...d5 — Les Noirs contre-attaquent au centre, créant des tensions immédiates."]},
+];
+
+const QUIZ=[
+  {q:"Quel est ton style de jeu naturel ?",opts:["Attaque directe et agressive","Position solide, jeu patient","Contre-attaque et dynamisme","Flexible selon l'adversaire"],sc:[{open:2,white:1},{closed:2},{hyper:2,black:1},{open:1,closed:1,hyper:1}]},
+  {q:"Avec quelle couleur préfères-tu jouer ?",opts:["Les Blancs — j'aime prendre l'initiative","Les Noirs — j'aime réagir","Les deux m'indiffèrent"],sc:[{white:3},{black:3},{white:1,black:1}]},
+  {q:"Quelle structure de pions t'attire ?",opts:["Centre ouvert, pièces actives","Centre fermé, jeu de flanc","Structures asymétriques et complexes"],sc:[{open:2},{closed:2},{hyper:2}]},
+  {q:"Face à 1.e4, tu réponds ?",opts:["1...e5 — combat direct","1...c5 — Sicilienne","1...e6 ou 1...c6 — solide","Je ne sais pas encore"],sc:[{open:2,black:1},{open:2,black:2},{closed:2,black:2},{}]},
+  {q:"Ton objectif principal en ouverture ?",opts:["Développement harmonieux","Déséquilibre et complications","Avantage spatial durable","Contre-jeu rapide"],sc:[{white:1,open:1},{hyper:2},{closed:2},{black:2,open:1}]},
+];
+
+let S={
+  page:'home',opening:OPENINGS[0],
+  boardState:null,step:0,sel:null,hints:false,lastFrom:null,lastTo:null,
+  score:{c:0,t:0},filter:'all',
+  quiz:{step:0,profile:{open:0,closed:0,hyper:0,white:0,black:0},done:false},
+  fc:{idx:0,flipped:false,sc:0,tot:0},
+  cc:{allGames:{},currentMonth:null}
+};
+
+/* ---- BOARD ---- */
+function initBS(){return[['r','n','b','q','k','b','n','r'],['p','p','p','p','p','p','p','p'],Array(8).fill(null),Array(8).fill(null),Array(8).fill(null),Array(8).fill(null),['P','P','P','P','P','P','P','P'],['R','N','B','Q','K','B','N','R']];}
+function applyUCI(b,u){const nb=b.map(r=>[...r]);const fr=8-parseInt(u[1]),fc=FILES.indexOf(u[0]),tr=8-parseInt(u[3]),tc=FILES.indexOf(u[2]);nb[tr][tc]=nb[fr][fc];nb[fr][fc]=null;return nb;}
+function getBoardAt(n){let b=initBS();for(let i=0;i<n;i++)b=applyUCI(b,S.opening.uci[i]);return b;}
+function pH(p){if(!p)return'';const iW=p===p.toUpperCase();return`<span class="${iW?'wp':'bp'}">${iW?WP[p]:BP[p]}</span>`;}
+
+function renderBoard(){
+  const el=document.getElementById('chessboard');if(!el)return;
+  el.innerHTML='';S.boardState=getBoardAt(S.step);
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    const sn=FILES[c]+(8-r),div=document.createElement('div');
+    div.className='sq '+((r+c)%2===0?'light':'dark');
+    div.innerHTML=pH(S.boardState[r][c]);
+    if(S.sel===sn)div.classList.add('sel');
+    if(S.lastFrom===sn)div.classList.add('hl-from');
+    if(S.lastTo===sn)div.classList.add('hl-to');
+    if(S.hints&&S.step<S.opening.uci.length&&sn===S.opening.uci[S.step].slice(0,2))div.classList.add('hint-sq');
+    div.addEventListener('click',()=>handleClick(sn,r,c));
+    el.appendChild(div);
+  }
+  const cf=document.getElementById('coords-file');
+  if(cf)cf.innerHTML=FILES.split('').map(f=>`<span>${f}</span>`).join('');
+}
+
+function handleClick(sn,r,c){
+  const o=S.opening;
+  if(S.step>=o.uci.length){setStatus('ok','Ouverture complète !');return;}
+  const exp=o.uci[S.step],piece=S.boardState[r][c],isWT=S.step%2===0;
+  if(S.sel){
+    const mv=S.sel+sn;
+    if(mv===exp){
+      S.lastFrom=S.sel;S.lastTo=sn;S.step++;S.score.c++;S.score.t++;S.sel=null;
+      renderBoard();setStatus('ok','✓ Correct !');renderPanel();updateScore();showExplain(S.step);
+      if(S.step>=o.uci.length)setStatus('ok','Bravo ! Ouverture complète !');
+      else if(S.step%2!==0)setTimeout(autoPlay,600);
+    }else{S.sel=null;S.score.t++;updateScore();setStatus('err','✗ Mauvais coup.');renderBoard();}
+    return;
+  }
+  if(piece){const iW=piece===piece.toUpperCase();if((isWT&&iW)||(!isWT&&!iW)){S.sel=sn;renderBoard();}}
+}
+
+function autoPlay(){const o=S.opening;if(S.step<o.uci.length){S.lastFrom=o.uci[S.step].slice(0,2);S.lastTo=o.uci[S.step].slice(2,4);S.step++;renderBoard();setStatus('info','À vous !');renderPanel();showExplain(S.step);}}
+function stepNext(){const o=S.opening;if(S.step>=o.uci.length){setStatus('ok','Ouverture complète !');return;}S.lastFrom=o.uci[S.step].slice(0,2);S.lastTo=o.uci[S.step].slice(2,4);S.step++;S.sel=null;renderBoard();setStatus(S.step>=o.uci.length?'ok':'info',S.step>=o.uci.length?'Ouverture complète !':'Observe ce coup.');renderPanel();showExplain(S.step);}
+function resetBoard(){S.step=0;S.sel=null;S.lastFrom=null;S.lastTo=null;renderBoard();document.getElementById('p-status').innerHTML='';const el=document.getElementById('p-explain');if(el)el.style.display='none';renderPanel();}
+function toggleHints(){S.hints=!S.hints;document.getElementById('hint-btn').textContent=S.hints?'Indices on':'Indices';renderBoard();}
+function setStatus(t,m){const el=document.getElementById('p-status');if(el)el.innerHTML=`<div class="status-box ${t}">${m}</div>`;}
+
+function showExplain(stepIdx){
+  const el=document.getElementById('p-explain');
+  if(!el)return;
+  const expl=S.opening.explain;
+  if(!expl||stepIdx<=0||stepIdx>expl.length){el.style.display='none';return;}
+  const txt=expl[stepIdx-1];
+  const moveLabel=S.opening.moves[stepIdx-1];
+  el.style.display='block';
+  el.innerHTML=`<div style="font-size:10px;color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Pourquoi ce coup ?</div><div style="font-size:13px;line-height:1.65;color:var(--text)"><span style="font-family:monospace;color:var(--gold);font-weight:600">${moveLabel}</span> — ${txt.includes('—')?txt.split('—').slice(1).join('—').trim():txt}</div>`;
+}
+function renderPanel(){
+  const o=S.opening,pct=Math.round(S.step/o.uci.length*100);
+  document.getElementById('p-name').textContent=o.name;
+  const tm={open:'Jeu ouvert',closed:'Jeu fermé',hyper:'Hypermoderne'};
+  document.getElementById('p-tags').innerHTML=`<span class="tag">${o.tag}</span><span class="tag ${o.color==='white'?'gold':'green'}">${o.color==='white'?'Blancs':'Noirs'}</span><span class="tag">${tm[o.type]}</span>`;
+  document.getElementById('p-desc').textContent=o.desc;
+  document.getElementById('p-moves').innerHTML=o.moves.map((m,i)=>{let c='mv';if(i<S.step)c+=' done';else if(i===S.step)c+=' cur';return`<span class="${c}">${i%2===0?Math.floor(i/2)+1+'.':''} ${m}</span>`;}).join('');
+  document.getElementById('p-prog').style.width=Math.min(pct,100)+'%';
+  document.getElementById('p-prog-lbl').textContent=`${S.step} / ${o.uci.length} coups`;
+  document.getElementById('p-prog-pct').textContent=pct+'%';
+}
+function updateScore(){document.getElementById('sidebar-score').textContent=`${S.score.c} / ${S.score.t} correct`;}
+
+/* ---- NAVIGATION ---- */
+function goPage(p){
+  S.page=p;
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  const map={home:'accueil',practice:'pratique',library:'biblioth',quiz:'profil',chesscom:'chess',flashcards:'flash'};
+  document.querySelectorAll('.nav-item').forEach(el=>{if(el.textContent.toLowerCase().includes(map[p]))el.classList.add('active');});
+  if(p==='library')renderLib();
+  if(p==='quiz')renderQuiz();
+  if(p==='flashcards')renderFC();
+  if(p==='practice'){renderPanel();renderBoard();}
+}
+
+function selectOpening(id){
+  S.opening=OPENINGS.find(o=>o.id===id);
+  S.step=0;S.sel=null;S.lastFrom=null;S.lastTo=null;
+  goPage('practice');
+  document.getElementById('p-status').innerHTML='';
+}
+
+/* ---- LIBRARY ---- */
+function setFilter(f,el){S.filter=f;document.querySelectorAll('.chip').forEach(b=>b.classList.remove('active'));el.classList.add('active');renderLib();}
+function renderLib(){
+  const list=OPENINGS.filter(o=>S.filter==='all'||(S.filter==='white'||S.filter==='black'?o.color===S.filter:o.type===S.filter));
+  document.getElementById('lib-grid').innerHTML=list.map(o=>`<div class="ocard ${o.id===S.opening.id?'active':''}" onclick="selectOpening('${o.id}')"><div class="ocard-name">${o.name}</div><div class="ocard-moves">${o.moves.map((m,i)=>(i%2===0?Math.floor(i/2)+1+'. ':'')+m).join(' ')}</div><div class="tag-row"><span class="tag">${o.tag}</span><span class="tag ${o.color==='white'?'gold':'green'}">${o.color==='white'?'Blancs':'Noirs'}</span></div></div>`).join('');
+}
+
+/* ---- QUIZ ---- */
+function renderQuiz(){
+  const q=S.quiz,el=document.getElementById('quiz-content');
+  if(q.done){renderProfile();return;}
+  if(q.step>=QUIZ.length){const p=q.profile,mx=Math.max(p.open,p.closed,p.hyper);q.prefColor=p.white>=p.black?'white':'black';q.prefType=p.open===mx?'open':p.closed===mx?'closed':'hyper';q.done=true;renderProfile();return;}
+  const cur=QUIZ[q.step];
+  el.innerHTML=`<div class="panel-card" style="margin-bottom:14px"><div style="font-size:11px;color:var(--muted);margin-bottom:5px">Question ${q.step+1} / ${QUIZ.length}</div><div class="prog-bg"><div class="prog-fill" style="width:${Math.round(q.step/QUIZ.length*100)}%"></div></div></div><div class="quiz-q">${cur.q}</div><div class="quiz-opts">${cur.opts.map((o,i)=>`<button class="quiz-opt" onclick="quizAns(${i})">${o}</button>`).join('')}</div>${q.step>0?`<button class="btn" style="margin-top:12px" onclick="quizBack()">← Retour</button>`:''}`;
+}
+function quizAns(i){const sc=QUIZ[S.quiz.step].sc[i]||{};Object.entries(sc).forEach(([k,v])=>{S.quiz.profile[k]=(S.quiz.profile[k]||0)+v;});S.quiz.step++;renderQuiz();}
+function quizBack(){if(S.quiz.step>0){S.quiz.step--;renderQuiz();}}
+
+function renderProfile(){
+  const{prefColor,prefType}=S.quiz;
+  const recs=OPENINGS.filter(o=>o.color===prefColor&&o.type===prefType).slice(0,3);
+  const others=OPENINGS.filter(o=>!recs.find(r=>r.id===o.id)).slice(0,3);
+  const sl={open:'Jeu ouvert',closed:'Jeu positionnel',hyper:'Hypermoderne'};
+  document.getElementById('quiz-content').innerHTML=`
+    <div class="stats-row"><div class="stat-card"><div class="stat-num">${prefColor==='white'?'♔':'♚'}</div><div class="stat-lbl">${prefColor==='white'?'Blancs':'Noirs'}</div></div><div class="stat-card"><div class="stat-num" style="font-size:13px">${sl[prefType]}</div><div class="stat-lbl">Style</div></div></div>
+    <div style="font-size:14px;font-weight:600;margin-bottom:12px">Ouvertures recommandées pour toi</div>
+    ${recs.map((o,i)=>`<div class="rec-card ${i===0?'top':''}">
+      ${i===0?'<span class="tag" style="display:inline-block;margin-bottom:7px">Meilleure correspondance</span>':''}
+      <div style="font-weight:700;font-size:15px;margin-bottom:3px">${o.name}</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.5">${o.desc}</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn primary sm" onclick="selectOpening('${o.id}')">Pratiquer →</button><span style="font-size:11px;font-family:monospace;color:var(--muted)">${o.moves.join(' ')}</span></div>
+    </div>`).join('')}
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">${others.map(o=>`<button class="btn sm" onclick="selectOpening('${o.id}')">${o.name}</button>`).join('')}<button class="btn sm" onclick="resetQuiz()">Refaire</button></div>`;
+}
+function resetQuiz(){S.quiz={step:0,profile:{open:0,closed:0,hyper:0,white:0,black:0},done:false};renderQuiz();}
+
+/* ---- CHESS.COM — version enrichie ---- */
+async function fetchCC(){
+  const user=document.getElementById('cc-user').value.trim();
+  if(!user){showCCMsg('err','Entre ton nom d\'utilisateur Chess.com.');return;}
+  showCCMsg('info','Chargement des parties...');
+  document.getElementById('cc-month-tabs').style.display='none';
+  S.cc.allGames={};
+  try{
+    const now=new Date();
+    const months=[];
+    for(let i=0;i<3;i++){
+      const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+      months.push({y:d.getFullYear(),m:d.getMonth()+1,label:d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'})});
+    }
+    showCCMsg('info',`Chargement de ${months.length} mois de parties...`);
+    await Promise.all(months.map(async({y,m,label})=>{
+      try{
+        const res=await fetch(`https://api.chess.com/pub/player/${user}/games/${y}/${String(m).padStart(2,'0')}`);
+        if(res.ok){const d=await res.json();if(d.games&&d.games.length){S.cc.allGames[label]=d.games;}}
+      }catch(e){}
+    }));
+    const allKeys=Object.keys(S.cc.allGames);
+    if(!allKeys.length){showCCMsg('err','Aucune partie trouvée. Vérifie le nom d\'utilisateur ou essaie la Démo.');return;}
+    S.cc.user=user;
+    S.cc.currentMonth='all';
+    renderMonthTabs(allKeys);
+    renderCCAnalysis(user,'all');
+  }catch(e){showCCMsg('err',`Erreur : ${e.message}`);}
+}
+
+function showCCMsg(type,msg){document.getElementById('cc-result').innerHTML=`<div class="status-box ${type}">${msg}</div>`;}
+
+function renderMonthTabs(keys){
+  const el=document.getElementById('cc-month-tabs');
+  el.style.display='block';
+  document.getElementById('month-tabs').innerHTML=
+    `<button class="mtab active" onclick="switchMonth('all',this)">Tout (${Object.values(S.cc.allGames).reduce((a,g)=>a+g.length,0)} parties)</button>`+
+    keys.map(k=>`<button class="mtab" onclick="switchMonth('${k}',this)">${k} (${S.cc.allGames[k].length})</button>`).join('');
+}
+
+function switchMonth(key,el){
+  S.cc.currentMonth=key;
+  document.querySelectorAll('.mtab').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderCCAnalysis(S.cc.user,key);
+}
+
+function getGamesForMonth(key){
+  if(key==='all')return Object.values(S.cc.allGames).flat();
+  return S.cc.allGames[key]||[];
+}
+
+function renderCCAnalysis(user,monthKey){
+  const games=getGamesForMonth(monthKey);
+  if(!games.length){showCCMsg('info','Aucune partie pour cette période.');return;}
+
+  const oMap={};let W=0,L=0,D=0,wW=0,wL=0,wD=0,bW=0,bL=0,bD=0;
+  const timeMap={bullet:0,blitz:0,rapid:0,daily:0};
+
+  games.forEach(g=>{
+    const iW=g.white?.username?.toLowerCase()===user.toLowerCase();
+    const myResult=iW?(g.white.result==='win'?'w':['resigned','checkmated','timeout','abandoned'].includes(g.white.result)?'l':'d'):(g.black.result==='win'?'w':['resigned','checkmated','timeout','abandoned'].includes(g.black.result)?'l':'d');
+    if(myResult==='w')W++;else if(myResult==='l')L++;else D++;
+    if(iW){if(myResult==='w')wW++;else if(myResult==='l')wL++;else wD++;}
+    else{if(myResult==='w')bW++;else if(myResult==='l')bL++;else bD++;}
+    if(g.time_class&&timeMap[g.time_class]!==undefined)timeMap[g.time_class]++;
+
+    if(g.pgn){
+      const m=g.pgn.match(/\[Opening "([^"]+)"\]/);
+      const k=m?m[1].split(':')[0].trim():'Inconnue';
+      if(!oMap[k])oMap[k]={n:0,w:0,l:0,d:0,asW:0,asB:0};
+      oMap[k].n++;
+      if(myResult==='w')oMap[k].w++;else if(myResult==='l')oMap[k].l++;else oMap[k].d++;
+      if(iW)oMap[k].asW++;else oMap[k].asB++;
+    }
+  });
+
+  const total=W+L+D;
+  const wpct=total?Math.round(W/total*100):0;
+  const wWpct=(wW+wL+wD)?Math.round(wW/(wW+wL+wD)*100):0;
+  const bWpct=(bW+bL+bD)?Math.round(bW/(bW+bL+bD)*100):0;
+  const sorted=Object.entries(oMap).filter(([,d])=>d.n>=2).sort((a,b)=>b[1].n-a[1].n).slice(0,8);
+  const maxN=sorted[0]?sorted[0][1].n:1;
+
+  // Best & worst openings (min 3 games)
+  const withRate=Object.entries(oMap).filter(([,d])=>d.n>=3).map(([name,d])=>({name,rate:Math.round(d.w/d.n*100),d})).sort((a,b)=>b.rate-a.rate);
+  const best=withRate.slice(0,2);
+  const worst=withRate.slice(-2).reverse();
+  const mostLoss=Object.entries(oMap).filter(([,d])=>d.n>=2).sort((a,b)=>b[1].l-a[1].l).slice(0,1);
+
+  // Dominant time control
+  const domTime=Object.entries(timeMap).sort((a,b)=>b[1]-a[1])[0];
+
+  document.getElementById('cc-result').innerHTML=`
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num" style="color:var(--accent)">${total}</div><div class="stat-lbl">Parties</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--green)">${wpct}%</div><div class="stat-lbl">Victoires</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--gold)">${wWpct}%</div><div class="stat-lbl">% Blancs</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--muted)">${bWpct}%</div><div class="stat-lbl">% Noirs</div></div>
+      <div class="stat-card"><div class="stat-num" style="font-size:14px">${domTime?domTime[0]:'—'}</div><div class="stat-lbl">Format</div></div>
+    </div>
+
+    <div style="margin-bottom:14px">
+      <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Bilan global</div>
+      <div class="winrate-bar">
+        <div class="wr-w" style="width:${wpct}%"></div>
+        <div class="wr-d" style="width:${total?Math.round(D/total*100):0}%"></div>
+        <div class="wr-l" style="flex:1"></div>
+      </div>
+      <div style="display:flex;gap:12px;font-size:12px;margin-top:4px">
+        <span style="color:var(--green)">● ${W} victoires</span>
+        <span style="color:var(--muted)">● ${D} nulles</span>
+        <span style="color:var(--red)">● ${L} défaites</span>
+      </div>
+    </div>
+
+    ${best.length||worst.length?`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      ${best.length?`<div class="insight-card good">
+        <div class="insight-label good">Tes meilleures ouvertures</div>
+        ${best.map(b=>`<div class="insight-text" style="margin-bottom:4px"><span>${b.name}</span> — ${b.rate}% victoires (${b.d.n} parties)</div>`).join('')}
+      </div>`:''}
+      ${worst.length?`<div class="insight-card bad">
+        <div class="insight-label bad">À améliorer</div>
+        ${worst.map(b=>`<div class="insight-text" style="margin-bottom:4px"><span>${b.name}</span> — ${b.rate}% victoires (${b.d.n} parties)</div>`).join('')}
+        ${worst.length?`<button class="btn sm primary" style="margin-top:8px" onclick="findAndPractice('${worst[0].name.replace(/'/g,"\\'")}')">Travailler →</button>`:''}
+      </div>`:''}
+    </div>
+    ${mostLoss.length?`<div class="insight-card warn" style="margin-bottom:14px">
+      <div class="insight-label warn">Attention</div>
+      <div class="insight-text">Tu perds le plus souvent avec <span>${mostLoss[0][0]}</span> (${mostLoss[0][1].l} défaites sur ${mostLoss[0][1].n} parties). <button class="btn sm" style="margin-left:8px" onclick="findAndPractice('${mostLoss[0][0].replace(/'/g,"\\'")}')">Pratiquer →</button></div>
+    </div>`:''}
+    `:''}
+
+    <div class="cc-grid">
+      <div class="cc-section">
+        <div class="cc-section-title">Ouvertures les plus jouées</div>
+        ${sorted.map(([name,d])=>{
+          const rate=Math.round(d.w/d.n*100);
+          const cls=rate>=55?'good':rate<=35?'bad':'neutral';
+          return`<div class="ob-row">
+            <div class="ob-label" title="${name}">${name}</div>
+            <div class="ob-bg"><div class="ob-fill ${cls}" style="width:${Math.round(d.n/maxN*100)}%"></div></div>
+            <div class="ob-pct">${d.n}</div>
+            <span class="rb w">${d.w}V</span><span class="rb l">${d.l}D</span>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="cc-section">
+        <div class="cc-section-title">Taux de victoire par ouverture</div>
+        ${withRate.slice(0,7).map(({name,rate,d})=>{
+          const cls=rate>=55?'good':rate<=35?'bad':'neutral';
+          return`<div class="ob-row">
+            <div class="ob-label" title="${name}">${name}</div>
+            <div class="ob-bg"><div class="ob-fill ${cls}" style="width:${rate}%"></div></div>
+            <div class="ob-pct" style="color:${rate>=55?'var(--green)':rate<=35?'var(--red)':'var(--muted)'}">${rate}%</div>
+          </div>`;
+        }).join('')}
+        ${withRate.length===0?'<div style="color:var(--muted);font-size:13px">Pas assez de parties par ouverture.</div>':''}
+      </div>
+    </div>
+  `;
+}
+
+function loadDemo(){
+  const ops=[
+    {n:'Ruy Lopez',w:12,l:5,d:2},{n:'Sicilian Defense',w:8,l:9,d:3},
+    {n:"Queen's Gambit",w:7,l:3,d:2},{n:'Italian Game',w:5,l:7,d:1},
+    {n:'French Defense',w:3,l:8,d:1},{n:'London System',w:9,l:2,d:3},
+    {n:'Caro-Kann Defense',w:4,l:4,d:2},{n:"King's Indian Defense",w:6,l:5,d:1}
+  ];
+  const games=[];
+  ops.forEach(op=>{
+    for(let i=0;i<op.w;i++)games.push({white:{username:'DemoUser',result:'win'},black:{username:'Opp',result:'resigned'},pgn:`[Opening "${op.n}"]\n`,time_class:'blitz'});
+    for(let i=0;i<op.l;i++)games.push({white:{username:'DemoUser',result:'resigned'},black:{username:'Opp',result:'win'},pgn:`[Opening "${op.n}"]\n`,time_class:'blitz'});
+    for(let i=0;i<op.d;i++)games.push({white:{username:'DemoUser',result:'agreed'},black:{username:'Opp',result:'agreed'},pgn:`[Opening "${op.n}"]\n`,time_class:'blitz'});
+  });
+  S.cc.allGames={'Données démo':games};S.cc.user='DemoUser';S.cc.currentMonth='all';
+  document.getElementById('cc-month-tabs').style.display='none';
+  renderCCAnalysis('DemoUser','all');
+}
+
+function findAndPractice(name){
+  const kw=name.toLowerCase().split(' ')[0];
+  const m=OPENINGS.find(o=>o.name.toLowerCase().includes(kw)||name.toLowerCase().includes(o.name.toLowerCase().split(' ')[0]));
+  selectOpening(m?m.id:'ruy');
+}
+
+/* ---- FLASHCARDS ---- */
+function renderMiniBoard(uciList, containerId){
+  const el=document.getElementById(containerId);
+  if(!el)return;
+  let b=initBS();
+  for(const u of uciList) b=applyUCI(b,u);
+  let html='<div style="display:grid;grid-template-columns:repeat(8,28px);grid-template-rows:repeat(8,28px);border:2px solid #5a3e28;border-radius:4px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.5)">';
+  for(let r=0;r<8;r++) for(let c=0;c<8;c++){
+    const p=b[r][c];
+    const bg=(r+c)%2===0?'#f0d9b5':'#b58863';
+    const glyph=p?(p===p.toUpperCase()?WP[p]:BP[p]):'';
+    const color=p?(p===p.toUpperCase()?'#fff':'#111'):'';
+    const shadow=p?(p===p.toUpperCase()?'0 0 2px #000,0 0 4px #000':'0 0 2px rgba(255,255,255,.3)'):'';
+    html+=`<div style="width:28px;height:28px;background:${bg};display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1;color:${color};text-shadow:${shadow}">${glyph}</div>`;
+  }
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+function renderFC(){
+  const qs=OPENINGS.map(o=>({q:`Premiers coups de la ${o.name} ?`,a:o.moves.map((m,i)=>(i%2===0?Math.floor(i/2)+1+'. ':'')+m).join('  '),hint:o.desc,id:o.id,uci:o.uci}));
+  const fc=qs[S.fc.idx%qs.length];
+  document.getElementById('fc-content').innerHTML=`
+    <div class="stats-row" style="max-width:360px">
+      <div class="stat-card"><div class="stat-num" style="color:var(--green)">${S.fc.sc}</div><div class="stat-lbl">Corrects</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--red)">${S.fc.tot-S.fc.sc}</div><div class="stat-lbl">À revoir</div></div>
+      <div class="stat-card"><div class="stat-num">${S.fc.idx%qs.length+1}/${qs.length}</div><div class="stat-lbl">Carte</div></div>
+    </div>
+    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:12px">
+      <div class="fc-card" style="flex:1;min-width:220px;margin-bottom:0" onclick="flipFC()">
+        <div style="font-size:17px;font-weight:600">${fc.q}</div>
+        ${S.fc.flipped
+          ?`<div style="font-size:14px;font-family:monospace;color:#a89ef9;line-height:1.8">${fc.a}</div><div style="font-size:12px;color:var(--muted);line-height:1.6;max-width:360px">${fc.hint}</div>`
+          :`<div style="font-size:13px;color:var(--muted)">Cliquez pour révéler</div>`}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:4px">
+        <div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Position finale</div>
+        <div id="fc-board"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn" style="color:var(--red);border-color:rgba(242,107,91,.4)" onclick="fcAns(false)">À revoir</button>
+      <button class="btn" style="color:var(--green);border-color:rgba(62,207,142,.4)" onclick="fcAns(true)">Je savais !</button>
+      <button class="btn sm" onclick="selectOpening('${fc.id}')">Pratiquer →</button>
+    </div>`;
+  renderMiniBoard(fc.uci,'fc-board');
+}
+function flipFC(){S.fc.flipped=!S.fc.flipped;renderFC();}
+function fcAns(ok){if(ok)S.fc.sc++;S.fc.tot++;S.fc.idx++;S.fc.flipped=false;S.score.t++;if(ok)S.score.c++;updateScore();renderFC();}
+
+renderLib();
+</script>
+</body>
+</html>
